@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>eBatik</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicons -->
+    <link href="{{ url_for('static', filename='img/favicon.png') }}" rel="icon">
+    <link href="{{ url_for('static', filename='img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i|Roboto:100,300,400,500,700|Philosopher:400,400i,700,700i"
+        rel="stylesheet">
+
+    <!-- Bootstrap css -->
+    <!-- <link rel="stylesheet" href="css/bootstrap.css"> -->
+    <link href="{{ url_for('static', filename='lib/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+
+    <!-- Libraries CSS Files -->
+    <link href="{{ url_for('static', filename='lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='lib/owlcarousel/assets/owl.theme.default.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='lib/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='lib/animate/animate.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='lib/modal-video/css/modal-video.min.css') }}" rel="stylesheet">
+
+    <!-- Main Stylesheet File -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <header id="header" class="header header-hide">
+        <div class="container">
+
+            <div id="logo" class="pull-left">
+                <h1><a href="#body" class="scrollto"><span>Batik </span>Insight</a></h1>
+            </div>
+
+            <nav id="nav-menu-container">
+                <ul class="nav-menu">
+                    <li class="menu-active"><a href="#hero">Klasifikasi</a></li>
+                    <li><a href="#features">Informasi Batik</a></li>
+                    <li><a href="#tentang">Tentang Website</a></li>
+                </ul>
+            </nav><!-- #nav-menu-container -->
+        </div>
+    </header><!-- #header -->
+
+    <!--==========================
+    Hero Section
+  ============================-->
+    <section id="hero" class="wow fadeIn" style="padding-top: 100px;">
+        <div class="hero-container">
+            <h1>Jelajahi Kekayaan Batik Indonesia,<br> Klasifikasikan Batikmu!</h1>
+            <h2>Silakan Unggah Gambar Batikmu di Tombol di Bawah ini <br> Kemudian Mari Klasifikasikan!</h2>
+            <div id="imagePreview" style="display: none; margin-bottom: 20px;">
+                <img id="uploadedImage" src="#" alt="Uploaded Image" style="width: 300px; height: auto;">
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <input type="file" name="image" accept="image/*" style="display: none;" id="uploadInput">
+                <label for="uploadInput" class="btn-get-started scrollto"
+                    style="cursor: pointer; margin-right: 10px;">Upload Gambar</label>
+                <button id="classifyButton" class="btn-get-started scrollto"
+                    style="display: none; margin-left: 10px;">Klasifikasi</button>
+            </div>
+            <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data" style="display: none;">
+                <input type="file" name="image" accept="image/*" id="hiddenUploadInput">
+            </form>
+            {% if uploaded_image %}
+            <div id="processedImageContainer" style="margin-bottom: 5px;">
+                <img id="processedImage" src="data:image/png;base64,{{ enhanced_image }}" alt="Processed Image"
+                    style="width: 290px; height: auto;">
+                {% if motif %}
+                <p>
+                    <span id="motifName" class="btn-get-started scrollto"
+                        style="cursor: default; margin-bottom: 0px;">Nama Motif: {{
+                        motif }}</span>
+                </p>
+                <p>
+                    <button id="classifyAgainButton" class="btn-get-started scrollto"
+                        style="margin-left: 10px;">Klasifikasi Ulang</button>
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+    </section><!-- #hero -->
+
+    <script>
+        // Function to hide upload button
+        function hideUploadButton() {
+            document.querySelector('label[for="uploadInput"]').style.display = 'none';
+        }
+
+        // Function to hide classify button
+        function hideClassifyButton() {
+            document.getElementById('classifyButton').style.display = 'none';
+        }
+
+        // Function to show upload button
+        function showUploadButton() {
+            document.querySelector('label[for="uploadInput"]').style.display = 'block';
+        }
+
+        // Function to show classify button
+        function showClassifyButton() {
+            document.getElementById('classifyButton').style.display = 'block';
+        }
+
+        // Function to handle file upload change event
+        document.getElementById('uploadInput').onchange = function (event) {
+            const [file] = event.target.files;
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('uploadedImage').src = e.target.result;
+                    document.getElementById('imagePreview').style.display = 'block';
+                    document.getElementById('classifyButton').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // Function to handle classification button click
+        document.getElementById('classifyButton').onclick = function () {
+            document.getElementById('hiddenUploadInput').files = document.getElementById('uploadInput').files;
+            document.getElementById('uploadForm').submit();
+            hideUploadButton();
+            hideClassifyButton();
+        };
+
+        // Function to handle classify again button click
+        document.getElementById('classifyAgainButton').onclick = function () {
+            // Reset form and related elements
+            document.getElementById('uploadForm').reset();
+            document.getElementById('uploadedImage').src = "#";
+            document.getElementById('imagePreview').style.display = 'none';
+            const processedImageContainer = document.getElementById('processedImageContainer');
+            if (processedImageContainer) {
+                processedImageContainer.style.display = 'none';
+            }
+            const motifName = document.getElementById('motifName');
+            if (motifName) {
+                motifName.style.display = 'none';
+            }
+            showUploadButton();
+            hideClassifyButton();
+            document.getElementById('classifyAgainButton').style.display = 'none';
+        };
+
+        // Check if page has motif result to hide upload and classify buttons
+        document.addEventListener
+            ("DOMContentLoaded", function () {
+                const motifElement = document.querySelector('.btn-get-started[style*="cursor: default;"]');
+                if (motifElement) {
+                    hideUploadButton();
+                    hideClassifyButton();
+                }
+            });
+    </script>
+
+
+    <!--==========================
+    Features Section
+  ============================-->
+
+    <section id="features" class="padd-section text-center wow fadeInUp">
+        <div class="container">
+            <div class="section-title text-center">
+                <h2>Informasi Batik</h2>
+                <p class="separator">Mari kita jelajahi keindahan dan makna di balik setiap motif batik! Di bawah ini,
+                    Anda akan menemukan galeri lengkap gambar batik beserta cerita filosofinya. Ayo temukan kisah yang
+                    tersembunyi di setiap corak dan warna yang memikat hati.</p>
+            </div>
+            <!-- Form pencarian -->
+            <form class="form-inline justify-content-center" action="/search" method="GET">
+                <div class="input-group mb-3" style="width: 500px;">
+                    <input type="text" class="form-control" id="searchInput" name="search" placeholder="Cari...">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-get-started scrollto"
+                            style="background-color: #5366d4; color: white; border: 4px solid #fff; cursor: pointer;">Cari</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                {% for rs in data %}
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-block">
+                        <img src="data:image/jpeg;base64,{{ rs.2 }}" alt="img" class="img-fluid">
+                        <h4>{{ rs.1 }}</h4>
+                        <p>
+                            <button type="button" class="btn btn-get-started scrollto" data-toggle="modal"
+                                data-target="#myModal{{ loop.index }}"
+                                style="background-color: #5366d4; color: white; border: none; cursor: pointer;">Filosofi</button>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Modal -->
+                <div class="modal fade" id="myModal{{ loop.index }}" tabindex="-1" role="dialog"
+                    aria-labelledby="exampleModalLabel" aria-hidden="true" data-motif="{{ rs.1 }}">
+                    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                        <div class="modal-content" style="background-color: #aab2e2;">
+                            <div class="modal-header">
+                                <h5 class="modal-title modal-title-enhanced text-center w-100" id="exampleModalLabel">{{
+                                    rs.1 }}</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <img src="data:image/jpeg;base64,{{ rs.2 }}" alt="Image" class="img-fluid mb-3">
+                                <p style="font-size: 18px; font-weight: 700; text-align: justify;">{{ rs.3 }}</p>
+                                <a href="{{ rs.4 }}" class="btn btn-primary" target="_blank">Informasi Sumber
+                                    Terkait</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                {% if num_pages > 1 %}
+                <div class="pagination text-center mx-auto">
+                    <ul class="pagination justify-content-center">
+                        {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link btn-get-started scrollto" href="?page={{ page - 1 }}"
+                                style="background-color: #5366d4; color: #ffffff; border: none; cursor: pointer;">Previous</a>
+                        </li>
+                        {% endif %}
+                        {% set start_page = (page - 1) // 5 * 5 + 1 %}
+                        {% set end_page = start_page + 4 %}
+                        {% if end_page > num_pages %}
+                        {% set end_page = num_pages %}
+                        {% endif %}
+                        {% for num in range(start_page, end_page + 1) %}
+                        <li class="page-item {% if num == page %}active{% endif %}">
+                            <a class="page-link btn-get-started scrollto {% if num == page %}active-page{% endif %}"
+                                href="?page={{ num }}"
+                                style="background-color: #5366d4; color: #ffffff; border: none; cursor: pointer;">{{ num
+                                }}</a>
+                        </li>
+                        {% endfor %}
+                        {% if end_page < num_pages %} <li class="page-item">
+                            <a class="page-link btn-get-started scrollto" href="?page={{ end_page + 1 }}"
+                                style="background-color: #5366d4; color: #ffffff; border: none; cursor: pointer;">Next</a>
+                            </li>
+                            {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+
+    <section id="tentang" class="padd-section text-center wow fadeInUp">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-12">
+                    <div class="section-title text-center">
+                        <h2>Mengapa Batik Insight ?</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row text-center">
+                <div class="col-12 col-md-4">
+                    <img src="{{ url_for('static', filename='img/faq.png') }}" alt="Gambar Batik"
+                        style="width: 140%; padding-right: 2%;">
+                </div>
+                <div class="col-12 col-md-8">
+                    <div class="info-container" style="text-align: left; padding-left: 5%;">
+                        <div class="info-box" style="border-radius: 50px; color: #fff;">
+                            <h2 style="color: #aab2e2; text-align: center;">Klasifikasi Motif Batik</h2>
+                        </div>
+                        <div class="col-md-11">
+                            <p style="color: #fff; font-size: medium;"><b>Pengguna dapat melakukan input gambar motif
+                                    batik untuk mengetahui jenis motif
+                                    batik yang terkandung dalam gambar tersebut. Aplikasi ini memanfaatkan
+                                    teknologi pengenalan gambar untuk menganalisis pola dan karakteristik motif
+                                    batik pada gambar yang diunggah. Dengan demikian, pengguna dapat dengan mudah
+                                    mengetahui informasi terkait dengan jenis motif batik yang ada,
+                                    sehingga memudahkan dalam mengenali dan memahami kekayaan seni batik Indonesia
+                                    secara lebih mendalam.</b></p>
+                        </div>
+                        <div class="info-box" style="border-radius: 50px; color: #fff;">
+                            <h2 style="color: #aab2e2; text-align: center;">Filosofi Motif Batik</h2>
+                        </div>
+                        <div class="col-md-11">
+                            <p style="color: #fff; font-size: medium;"><b>Pengguna juga dapat melakukan pencarian untuk
+                                    mengetahui filosofi yang terkandung dalam motif
+                                    batik.
+                                    Dengan fitur ini, pengguna dapat memperoleh pemahaman yang lebih mendalam tentang
+                                    makna dan
+                                    nilai budaya
+                                    yang tersirat dalam setiap motif batik yang ada.</b></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!--==========================
+    Footer
+  ============================-->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 col-lg-4">
+                    <div class="footer-logo text-center">
+                        <!-- Tambahkan class text-center untuk membuat teks berada di tengah -->
+                        <a class="navbar-brand" href="#">@Batik Insight</a>
+                        <p>Developed By Ardha Nur Azizah</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="copyrights">
+            <div class="container">
+            </div>
+        </div>
+    </footer>
+
+    <a href="#" class="back-to-top"><i class="fa fa-chevron-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="{{ url_for('static', filename='lib/jquery/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/jquery/jquery-migrate.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/superfish/hoverIntent.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/superfish/superfish.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/easing/easing.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/modal-video/js/modal-video.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/owlcarousel/owl.carousel.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/wow/wow.min.js') }}"></script>
+    <!-- Contact Form JavaScript File -->
+    <script src="{{ url_for('static', filename='contactform/contactform.js') }}"></script>
+
+    <!-- Template Main Javascript File -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+
+</html>
